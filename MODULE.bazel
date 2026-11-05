@@ -269,6 +269,30 @@ go_deps.module_override(
     path = "github.com/steveyegge/beads",
 )
 
+# beads is replaced (go.mod) by a local checkout of the fork's pebble branch
+# while the pebble backend is evaluated. That checkout is a Bazel repository
+# of its own whose BUILD files name its own module deps (@gazelle, @rules_go),
+# which are not visible from a go_deps repository, so gazelle regenerates the
+# BUILD files from scratch ("clean") the way it does for the module fetched
+# from the proxy; the migrations patch above applies to the result as before.
+go_deps.gazelle_override(
+    build_file_generation = "clean",
+    path = "github.com/steveyegge/beads",
+)
+
+# Pebble's zstd has a cgo path (DataDog/zstd, bundling libzstd) and a pure-Go
+# path behind the pebblegozstd tag. gc links Dolt's own bundled libzstd
+# (dolthub/gozstd), so the cgo path duplicates every zstd symbol at link time:
+# gazelle must see pebblegozstd as satisfied so it selects zstd_nocgo.go and
+# drops the DataDog/zstd edge; .bazelrc sets the same tag for the compile.
+go_deps.gazelle_override(
+    directives = [
+        "gazelle:build_tags pebblegozstd",
+        "gazelle:exclude internal/compression/zstd_cgo.go",
+    ],
+    path = "github.com/cockroachdb/pebble/v2",
+)
+
 # protoc-gen-validate's validate package regenerates the checked-in
 # validate.pb.go with go_proto_library, both in gazelle's default proto mode
 # and in the module's own validate/BUILD, which pulls the C++ protoc and

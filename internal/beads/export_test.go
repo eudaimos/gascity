@@ -1,6 +1,14 @@
 package beads
 
-import "time"
+import (
+	"context"
+	"strings"
+	"testing"
+	"time"
+
+	beadslib "github.com/steveyegge/beads"
+	bdpebble "github.com/steveyegge/beads/backend/pebble"
+)
 
 // NewNativeDoltStoreForConformance returns a NativeDoltStore backed by the
 // in-memory native storage fixture for the external conformance suite.
@@ -120,4 +128,46 @@ func (m *MemStore) WriteRowForTest(id string, mutate func(*Bead)) {
 // production bound.
 func (s *BdStore) SetTxProjectionTimeoutForTest(d time.Duration) {
 	s.txProjectionTimeout = d
+}
+
+// NewNativePebbleStoreForConformance returns a NativeDoltStore over an
+// in-memory pebble store from the linked beads library, for the external
+// conformance suites. The store mints under "gc" like the in-memory fixture; the
+// wrapper's own prefix stays unset like that
+// fixture's.
+func NewNativePebbleStoreForConformance(t *testing.T) Store {
+	t.Helper()
+	return newNativeDoltStoreForTest(newNativePebbleStorage(t, "gc"))
+}
+
+// NewNativePebbleStoreForPinnedIDFenceConformance is the pebble counterpart
+// of NewNativeDoltStoreForPinnedIDFenceConformance: the backend honors an
+// explicit id on create, so a pinned id survives the round trip.
+func NewNativePebbleStoreForPinnedIDFenceConformance(t *testing.T, mintPrefix string, namespaces ...string) Store {
+	t.Helper()
+	store := newNativeDoltStoreForTest(newNativePebbleStorage(t, mintPrefix), WithNativeDoltStoreReservedIDPrefixes(namespaces...))
+	store.idPrefix = normalizeIDPrefix(mintPrefix)
+	return store
+}
+
+// newNativePebbleStorage opens an in-memory pebble store with issuePrefix as
+// its workspace prefix and closes it when the test ends.
+func newNativePebbleStorage(t *testing.T, issuePrefix string) beadslib.Storage {
+	t.Helper()
+	ctx := context.Background()
+	storage, err := bdpebble.OpenInMemory(ctx)
+	if err != nil {
+		t.Fatalf("open in-memory pebble store: %v", err)
+	}
+	t.Cleanup(func() { _ = storage.Close() })
+	if err := storage.SetConfig(ctx, "issue_prefix", issuePrefix); err != nil {
+		t.Fatalf("set issue_prefix: %v", err)
+	}
+	// A real beads store validates issue types against the workspace's
+	// registered custom types; gc registers RequiredCustomTypes in every
+	// scope it provisions (registerScopeCustomTypes), so the fixture does too.
+	if err := storage.SetConfig(ctx, "types.custom", strings.Join(RequiredCustomTypes, ",")); err != nil {
+		t.Fatalf("set types.custom: %v", err)
+	}
+	return storage
 }

@@ -213,3 +213,9 @@ test:integration-packages --config=integration
 # filter equal to.
 test:integration-review-formulas --config=integration
 test:integration-review-formulas --test_filter=^(TestAdoptPRFormulaCompileAndRun|TestPersonalWorkFormulaCompileAndRun|TestAdoptPRFormulaRetriesTransientReviewerStep|TestAdoptPRFormulaSoftFailsGeminiAfterTransientRetries|TestReviewLoopApprovesInIterationTwoWithBodyRetry|TestRetryManagedPooledWorkerRecoversClaimedAttemptAfterCrash)$
+
+# Pebble (a beads storage backend linked through the beads library) selects
+# its pure-Go zstd under this tag; its cgo zstd would duplicate the libzstd
+# symbols Dolt's gozstd already links. See the pebble gazelle_override in
+# MODULE.bazel.
+build --@rules_go//go/config:tags=pebblegozstd

@@ -80,7 +80,7 @@ func newCompiledBackendRegistry() (*BackendRegistry, error) {
 // BdStore) is deliberately absent — registration alone never makes a name an
 // extension.
 func selfSufficientLibraryBackends() []BackendName {
-	return []BackendName{"http"}
+	return []BackendName{"http", "pebble"}
 }
 
 // RecognizeBackend reports whether this build registers the given backend name.

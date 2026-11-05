@@ -156,6 +156,12 @@ func RunStoreTestsWithOptions(t *testing.T, newStore func() beads.Store, opts Op
 		// echo instead of issuing a post-create Get, so any backend whose Create echo
 		// diverges from Get on the projection surface would silently corrupt the typed
 		// create front door. This pins the parity across every backend, not just memstore.
+		//
+		// The bead is typed "session", the type gc's session beads carry, rather
+		// than the "gc:session" label spelled as a type: a real beads store
+		// validates the type against the workspace's registered custom types and
+		// refuses one it does not know, which would fail this case before it
+		// reached the echo it is about.
 		s := newStore()
 		meta := map[string]string{
 			"session_name": "polecat-1",
@@ -164,7 +170,7 @@ func RunStoreTestsWithOptions(t *testing.T, newStore func() beads.Store, opts Op
 			"pool_slot":    "3",
 			"agent_name":   "tower/polecat",
 		}
-		created, err := s.Create(beads.Bead{Title: "polecat", Type: "gc:session", Labels: []string{"gc:session"}, Metadata: meta})
+		created, err := s.Create(beads.Bead{Title: "polecat", Type: "session", Labels: []string{"gc:session"}, Metadata: meta})
 		if err != nil {
 			t.Fatal(err)
 		}
