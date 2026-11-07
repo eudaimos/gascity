@@ -281,4 +281,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace github.com/steveyegge/beads => /Users/jeff/dev/gastownhall/beads-pebble
+replace github.com/steveyegge/beads => github.com/eudaimos/beads v0.0.0-20261107210157-eee0968c6524

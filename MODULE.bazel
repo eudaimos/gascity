@@ -269,12 +269,13 @@ go_deps.module_override(
     path = "github.com/steveyegge/beads",
 )
 
-# beads is replaced (go.mod) by a local checkout of the fork's pebble branch
-# while the pebble backend is evaluated. That checkout is a Bazel repository
-# of its own whose BUILD files name its own module deps (@gazelle, @rules_go),
-# which are not visible from a go_deps repository, so gazelle regenerates the
-# BUILD files from scratch ("clean") the way it does for the module fetched
-# from the proxy; the migrations patch above applies to the result as before.
+# beads is replaced (go.mod) by a pinned commit of the fork's pebble branch
+# (github.com/eudaimos/beads, spike/pebble-backend) while the pebble backend
+# is evaluated. The fork is a Bazel repository of its own whose BUILD files
+# name its own module deps (@gazelle, @rules_go), which are not visible from a
+# go_deps repository, so gazelle regenerates the BUILD files from scratch
+# ("clean") the way it does for the module fetched from the proxy; the
+# migrations patch above applies to the result as before.
 go_deps.gazelle_override(
     build_file_generation = "clean",
     path = "github.com/steveyegge/beads",
